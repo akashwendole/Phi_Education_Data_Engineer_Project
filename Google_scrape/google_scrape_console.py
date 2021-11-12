@@ -14,6 +14,7 @@ site = requests.get(url).content
 doc = BeautifulSoup(site, "html.parser")
 f = doc.find("div", id="main")
 search_results = {}
+lists = []
 for i in range(1, len(f) - 1):
     try:
         g = f.find_all(class_="ZINbbc xpd O9g5cc uUPGi")[i]
@@ -21,10 +22,13 @@ for i in range(1, len(f) - 1):
         description = g.find(class_="BNeawe s3v9rd AP7Wnd").getText()
         link = g.find('a')['href'][7:]
         search_results[title] = {"link": link, "description": description}
+        lists.append((title,link,description))
         csv_writer.writerow([title, description, link])
     except:
         continue
 
+# print(search_results)
+print(lists)
 # People also ask for
 csv_writer.writerow('')
 csv_writer.writerow('')
