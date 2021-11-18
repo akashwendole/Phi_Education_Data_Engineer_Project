@@ -3,21 +3,24 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 
+csv_file = open("google_scrape.csv", "w")
+csv_writer = csv.writer(csv_file)
+
 window = tk.Tk()
 window.geometry("1200x700")
 
-csv_file = open("google_scrape.csv", "w")
-csv_writer = csv.writer(csv_file)
-csv_writer.writerow(["title", "description", "link"])
+lists = []
+people_also_asked_for = []
+related_search = []
 
 
 def button_command():
+    lists.clear()
     query_google = query.get()
     url = f"https://www.google.com/search?q={query_google}&ie=utf-8&oe=utf-8"
     site = requests.get(url).content
     doc = BeautifulSoup(site, "html.parser")
     f = doc.find("div", id="main")
-    lists = []
     for i in range(1, len(f) - 1):
         try:
             g = f.find_all(class_="ZINbbc xpd O9g5cc uUPGi")[i]
@@ -25,20 +28,17 @@ def button_command():
             description = g.find(class_="BNeawe s3v9rd AP7Wnd").getText()
             link = g.find('a')['href'][7:]
             lists.append((title, link, description))
-            csv_writer.writerow([title, description, link])
+
         except:
             continue
 
     printing_tables(lists)
 
-    csv_writer.writerow('')
-    csv_writer.writerow('')
-    csv_writer.writerow('')
-    csv_writer.writerow(['People also ask for'])
     also_ask = f.find_all(class_="Lt3Tzc")
     i = 0
+    people_also_asked_for.clear()
     for result in also_ask:
-        csv_writer.writerow([result.getText()])
+        people_also_asked_for.append(result.getText())
         frame = tk.Frame(relief='sunken', borderwidth=1)
         cell = tk.Label(master=frame, text=result.getText(), height=5, width=30, anchor="nw", wraplength=200)
         cell.pack(side=tk.LEFT)
@@ -49,15 +49,11 @@ def button_command():
         frame_title.grid(row=1, column=4, padx=25)
         i += 1
 
-    # Related searches
-    csv_writer.writerow('')
-    csv_writer.writerow('')
-    csv_writer.writerow('')
-    csv_writer.writerow(['Related searches'])
     related_searches = f.find_all(class_="BNeawe s3v9rd AP7Wnd lRVwie")
     i = 0
+    related_search.clear()
     for related in related_searches:
-        csv_writer.writerow([related.getText()])
+        related_search.append((related.getText()))
         frame = tk.Frame(relief='sunken', borderwidth=1)
         cell = tk.Label(master=frame, text=related.getText(), height=5, width=30, anchor="nw", wraplength=200)
         cell.pack(side=tk.LEFT)
@@ -87,6 +83,23 @@ def printing_tables(search_results):
             frame_title.grid(row=1, column=j)
 
 
+def csv_open():
+    csv_writer.writerow(['Title|', 'Link', 'Description'])
+    for title, link, desc in lists:
+        csv_writer.writerow([title, link, desc])
+    csv_writer.writerow('')
+    csv_writer.writerow(['People also asked for'])
+    for also_ask in people_also_asked_for:
+        csv_writer.writerow([also_ask])
+    csv_writer.writerow('')
+    csv_writer.writerow(['Related searches'])
+    for relate in related_search:
+        csv_writer.writerow([relate])
+    csv_writer.writerow('')
+    csv_writer.writerow('')
+    return None
+
+
 input_frame = tk.Frame()
 label = tk.Label(master=input_frame, text="Enter the query which you want to search for:", font=('arial', 14, 'bold'))
 query = tk.Entry(master=input_frame, width=20)
@@ -97,5 +110,9 @@ button_frame = tk.Frame()
 scrape = tk.Button(master=button_frame, text="Scrape", command=button_command, font=('arial', 14, 'bold'))
 scrape.pack(side=tk.BOTTOM)
 button_frame.place(x=170, y=30)
+button_frame = tk.Frame()
+scrape = tk.Button(master=button_frame, text="Save to CSV", command=csv_open, font=('arial', 14, 'bold'))
+scrape.pack(side=tk.BOTTOM)
+button_frame.place(x=270, y=30)
 
 window.mainloop()
